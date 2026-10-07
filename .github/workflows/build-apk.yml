@@ -20,7 +20,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK 35
+      - name: Install Android SDK
         run: |
           yes | sdkmanager --licenses || true
           sdkmanager "platforms;android-35" "build-tools;35.0.0"
@@ -33,6 +33,7 @@ jobs:
       - name: Extract Android project
         run: |
           unzip -q BullishMoment-Android-Project.zip
+          echo "Project extracted"
           ls -la BullishMoment-Android
 
       - name: Build APK
@@ -41,8 +42,4 @@ jobs:
           gradle assembleDebug --stacktrace
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: BullishMoment-APK
-          path: BullishMoment-Android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+       
