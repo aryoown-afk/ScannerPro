@@ -39,7 +39,8 @@ jobs:
 
       - name: Build APK
         working-directory: extracted/BinanceSpotScannerApp
-        run: run: gradle --no-daemon --stacktrace --info assembleDebug
+        run: gradle --no-daemon --stacktrace --info assembleDebug
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
