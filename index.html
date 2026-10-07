@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Binance Spot Scanner & Backtest v11 — Trend Momentum Breakout M15</title>
+
+<style>
+:root{
+  --bg:#050505;--panel:#0b0b0b;--panel2:#11100d;--panel3:#080808;
+  --line:#28231a;--line2:#4a3b1d;--text:#f5f2e8;--muted:#9d9686;
+  --blue:#d4a72c;--blue2:#f2c94c;--green:#28c98b;--red:#ef5b68;
+  --amber:#e4b83f;--gold:#f0b90b;--gold2:#ffd95a;
+  --shadow:0 18px 55px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box}
+html{background:var(--bg);scroll-behavior:smooth}
+body{
+  margin:0;min-height:100vh;color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  background:
+    radial-gradient(900px 520px at 0 -10%,rgba(240,185,11,.12),transparent 62%),
+    radial-gradient(800px 480px at 100% 0,rgba(255,217,90,.045),transparent 60%),
+    #050505;
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.appbar{
+  position:sticky;top:0;z-index:20;
+  background:rgba(5,5,5,.94);backdrop-filter:blur(22px);
+  border-bottom:1px solid rgba(240,185,11,.20);
+}
+.top{
+  max-width:1240px;margin:auto;padding:15px 16px 11px;
+  display:flex;align-items:center;gap:14px;
+}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.brandMark{
+  width:36px;height:36px;border-radius:11px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#ffe37a,#d49b00 58%,#8c6200);
+  color:#171000;
+  box-shadow:0 0 25px rgba(240,185,11,.25),inset 0 1px rgba(255,255,255,.35);
+  font-weight:950;
+}
+.brandText{min-width:0}
+.brandText b{display:block;font-size:15px;letter-spacing:-.01em}
+.brandText span{display:block;color:#a99f89;font-size:10px;margin-top:2px}
+.topStatus{
+  margin-left:auto;display:flex;align-items:center;gap:7px;
+  color:#aaa18f;font-size:10px;white-space:nowrap
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px rgba(40,201,139,.8)}
+header{
+  position:static;background:transparent;border:0;box-shadow:none;
+  max-width:1240px;margin:auto;padding:0 16px 13px;
+}
+header h1{display:none}
+header>p{max-width:900px;margin:0;color:#999181;font-size:12px;line-height:1.5}
+header>p b{color:#eee5d2}
+.tabs{display:flex;gap:7px;padding:12px 0 0;overflow:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  position:relative;flex:0 0 auto;border:1px solid #332b1b;border-radius:10px;
+  padding:9px 15px;background:#0d0c09;color:#a69e8d;font-weight:800;font-size:12px;
+  transition:.18s;
+}
+.tab:hover{border-color:#80621c;color:#eee2bf}
+.tab.active{
+  color:#fff5d4;border-color:rgba(240,185,11,.65);
+  background:linear-gradient(180deg,rgba(240,185,11,.16),rgba(240,185,11,.045));
+  box-shadow:inset 0 0 18px rgba(240,185,11,.035);
+}
+.tab.active:after{
+  content:"";position:absolute;left:13px;right:13px;bottom:-1px;height:2px;
+  background:var(--gold2);box-shadow:0 0 12px rgba(240,185,11,.75)
+}
+.wrap{position:relative;max-width:1240px;margin:auto;padding:14px 16px 35px}
+.panel{
+  position:relative;background:linear-gradient(145deg,rgba(13,13,12,.98),rgba(7,7,6,.98));
+  border:1px solid #292319;border-radius:16px;padding:15px;margin-bottom:12px;
+  box-shadow:var(--shadow);overflow:hidden;
+}
+.panel:before{
+  content:"";position:absolute;left:16px;top:0;width:42px;height:2px;
+  background:var(--gold2);box-shadow:0 0 12px rgba(240,185,11,.55)
+}
+.panelTitle{font-size:13px;font-weight:850;letter-spacing:.01em;color:#f4ead0}
+.panelSub{font-size:10px;color:var(--muted);margin-top:3px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.right{margin-left:auto}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+button{
+  border:1px solid rgba(240,185,11,.65);border-radius:10px;padding:10px 13px;
+  color:#181300;background:linear-gradient(180deg,#f8d45b,#c99108);
+  box-shadow:0 5px 18px rgba(240,185,11,.08),inset 0 1px rgba(255,255,255,.35);
+  font-size:11px;font-weight:850;transition:.15s
+}
+button:hover{filter:brightness(1.08);transform:translateY(-1px)}
+button.secondary{
+  color:#e3dac5;background:#11100d;border-color:#4b3c20
+}
+button.green{background:linear-gradient(180deg,#35d7a0,#098c66);border-color:#35d7a0;color:#06120e}
+button.red{background:linear-gradient(180deg,#dc6070,#a83c4d);border-color:#ed7482;color:#fff}
+button:disabled{opacity:.42;cursor:not-allowed;transform:none}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;
+  border:1px solid #4b3c20;background:#100e09;color:#d2bd7e;font-size:10px;font-weight:750
+}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.grid5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.field label{
+  display:block;color:#8e8675;font-size:9px;text-transform:uppercase;
+  letter-spacing:.08em;font-weight:800;margin-bottom:5px
+}
+.field input,.field select{
+  width:100%;padding:9px 10px;border-radius:9px;border:1px solid #30291d;
+  background:#080807;color:var(--text);outline:none;font-size:12px
+}
+.field input:focus,.field select:focus{
+  border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,185,11,.09)
+}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.stat{
+  min-height:74px;position:relative;padding:11px 12px;border-radius:12px;
+  background:linear-gradient(145deg,#12110e,#0a0a09);border:1px solid #2c261b
+}
+.stat:after{
+  content:"";position:absolute;right:10px;top:10px;width:5px;height:5px;border-radius:50%;
+  background:var(--gold2);box-shadow:0 0 9px rgba(240,185,11,.75)
+}
+.stat b{display:block;font-size:19px;line-height:1.1;color:#f8edce}
+.stat span{display:block;margin-top:5px;color:#8a8272;font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.status{margin-top:9px;color:#958d7d;font-size:11px;line-height:1.45;white-space:pre-wrap}
+.small{font-size:10px;color:var(--muted)}
+.bar{height:6px;background:#17140d;border-radius:99px;overflow:hidden;margin-top:9px}
+.bar i{
+  display:block;height:100%;width:0;
+  background:linear-gradient(90deg,#9c6d00,#f0b90b,#ffe37a);
+  box-shadow:0 0 12px rgba(240,185,11,.45);transition:width .15s
+}
+.scanHero{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:end}
+.scanHero h2{margin:0;font-size:18px;letter-spacing:-.02em;color:#f5ecd7}
+.scanHero .hint{margin-top:4px;color:var(--muted);font-size:10px}
+.tableWrap{overflow:auto;max-height:64vh;border:1px solid #292319;border-radius:11px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
+th,td{text-align:left;padding:9px 8px;white-space:nowrap;border-bottom:1px solid #211d15}
+th{
+  color:#a69b83;background:#11100d;position:sticky;top:0;z-index:2;
+  font-size:9px;text-transform:uppercase;letter-spacing:.06em
+}
+tbody tr:hover{background:rgba(240,185,11,.055)}
+tbody tr:last-child td{border-bottom:0}
+.pos{color:var(--green)}.neg{color:var(--red)}.warn{color:var(--amber)}
+.hidden{display:none!important}
+.note{
+  margin-top:10px;padding:9px 10px;border-left:2px solid var(--gold);
+  background:rgba(240,185,11,.045);border-radius:7px;color:#9f9684;font-size:10px;line-height:1.5
+}
+.scanCards{display:none}
+.signalCard{
+  border:1px solid #2c261b;background:linear-gradient(145deg,#12110e,#090908);
+  border-radius:14px;padding:12px;margin-bottom:8px;box-shadow:0 10px 28px rgba(0,0,0,.35)
+}
+.signalCard.new{animation:rowIn .18s ease-out}
+.signalTop{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.signalRank{color:#776f60;font-size:9px}
+.signalPair{font-size:15px;font-weight:900}
+.signalScore{
+  margin-left:auto;padding:4px 7px;border-radius:99px;
+  background:rgba(240,185,11,.1);border:1px solid rgba(240,185,11,.25);
+  color:#e6ca72;font-size:9px;font-weight:800
+}
+.signalGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.signalItem{padding:8px;border:1px solid #282219;background:#0b0b09;border-radius:9px}
+.signalItem span{display:block;color:#776f60;font-size:8px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.signalItem b{display:block;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.signalSetup{
+  margin-top:7px;padding:8px 9px;border-left:2px solid var(--green);
+  background:rgba(40,201,139,.035);border-radius:6px;color:#9b927f;font-size:9px;line-height:1.4
+}
+.tradeModal{
+  position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.80);
+  backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:14px
+}
+.tradeBox{
+  width:min(1050px,100%);max-height:90vh;overflow:hidden;
+  background:#0b0b09;border:1px solid #4a3a1e;border-radius:16px;box-shadow:0 30px 100px #000
+}
+.tradeHead{display:flex;align-items:center;padding:13px 14px;border-bottom:1px solid #292319}
+.tradeHead h3{margin:0;font-size:13px;color:#f3e7c8}.tradeBody{padding:12px}.tradeSummary{margin-bottom:10px}
+@keyframes rowIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.scanDesktopTable{-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.scanDesktopTable table{min-width:1180px}
+.scanDesktopTable th{z-index:3}
+@media(max-width:850px){
+  .grid5{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .scanHero{grid-template-columns:1fr}
+  .right{margin-left:0}
+  .scanDesktopTable{display:block}
+  .scanCards{display:none}
+  .scanDesktopTable table{min-width:1180px}
+}
+@media(min-width:851px){.scanCards{display:none}.scanDesktopTable{display:block}}
+@media(max-width:480px){
+  .top{padding:12px 12px 9px}.brandText b{font-size:13px}
+  header{padding:0 12px 10px}.wrap{padding:10px 12px 28px}
+  .panel{padding:12px;border-radius:14px}
+  .grid,.grid5{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat{min-height:67px}.stat b{font-size:17px}
+  .scanHero h2{font-size:16px}
+  .scanDesktopTable{margin-left:0;margin-right:0;border-radius:10px}
+  .scanDesktopTable table{min-width:1180px}
+}
+</style>
+
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#050505">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Spot Scanner Pro">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+</head>
+<body>
+<div class="appbar">
+  <div class="top">
+    <div class="brand">
+      <div class="brandMark">S</div>
+      <div class="brandText">
+        <b>Spot Scanner Pro</b>
+        <span>Trend · Momentum · Breakout · M15 · Black & Gold</span>
+      </div>
+    </div>
+    <div class="topStatus"><i class="dot"></i><span>BINANCE SPOT · SAFE SPEED</span></div>
+  </div>
+  <header>
+    <p>Scanner dan backtest memakai mesin strategi yang sama. Hasil scanner ditampilkan saat pair selesai diproses, tanpa menunggu seluruh universe selesai.</p>
+    <div class="tabs">
+      <button class="tab active" data-tab="scanner">Scanner</button>
+      <button class="tab" data-tab="backtest">Backtest</button>
+      <button class="tab" data-tab="settings">Strategy</button>
+    </div>
+  </header>
+</div>
+
+<main class="wrap">
+<section id="scanner" class="tabPage">
+  <div class="panel">
+    <div class="scanHero">
+      <div>
+        <h2>Market Scanner</h2>
+        <div class="hint">Cari setup bullish yang memenuhi score strategi dan tampilkan Entry / SL / TP secara langsung.</div>
+      </div>
+      <span id="filterPill" class="pill">Filter: OFF</span>
+    </div>
+    <div class="actions">
+      <button id="scanBtn">SCAN MARKET</button>
+      <button id="clearResults" class="secondary">CLEAR</button>
+    </div>
+    <div id="scanStatus" class="status">Siap melakukan scan.</div>
+    <div class="bar"><i id="scanBar"></i></div>
+  </div>
+
+  <div class="panel">
+    <div class="stats" id="scanStats">
+      <div class="stat"><b>0</b><span>Pair selesai</span></div>
+      <div class="stat"><b>0</b><span>Sinyal</span></div>
+      <div class="stat"><b>0</b><span>Universe</span></div>
+      <div class="stat"><b>0</b><span>Error pair</span></div>
+    </div>
+    <div class="status small">Hanya setup yang memenuhi syarat strategi yang ditampilkan. Coin tanpa sinyal tidak memenuhi kondisi breakout/momentum saat scan.</div>
+  </div>
+
+  <div class="panel">
+    <div class="tableWrap scanDesktopTable">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Pair</th><th>Score</th><th>Trades</th><th>WR</th><th>Net P/L</th>
+          <th>Entry</th><th>SL</th><th>TP</th><th>RR</th><th>RSI</th><th>ATR%</th><th>Vol x</th><th>Setup</th>
+        </tr></thead>
+        <tbody id="scanTable"></tbody>
+      </table>
+    </div>
+    <div id="scanCards" class="scanCards"></div>
+  </div>
+</section>
+
+<section id="backtest" class="tabPage hidden">
+  <div class="panel">
+    <div class="panelTitle">Backtest & Filter</div>
+    <div class="panelSub">Uji strategi pada seluruh pair, lalu simpan hanya coin yang memenuhi filter ke Scanner.</div>
+
+    <div class="grid5" style="margin-top:12px">
+      <div class="field"><label>Timeframe</label><select id="tf"><option value="15m" selected>15m</option></select></div>
+      <div class="field"><label>Tanggal Mulai</label><input id="startDate" type="date"></div>
+      <div class="field"><label>Tanggal Akhir</label><input id="endDate" type="date"></div>
+      <div class="field"><label>TP (%)</label><input id="tpPct" type="number" value="2" min="0.1" max="100" step="0.1"></div>
+      <div class="field"><label>SL (%)</label><input id="slPct" type="number" value="50" min="0.1" max="100" step="0.1"></div>
+      <div class="field"><label>Fee / sisi (%)</label><input id="fee" type="number" value="0.1" min="0" max="1" step="0.01"></div>
+      <div class="field"><label>Modal awal</label><input id="capital" type="number" value="100" min="1" step="10"></div>
+      <div class="field"><label>Min WR (%)</label><input id="minWR" type="number" value="35" min="0" max="100" step="1"></div>
+      <div class="field"><label>Min PF</label><input id="minPF" type="number" value="1.05" min="0" step="0.05"></div>
+      <div class="field"><label>Min Net P/L (%)</label><input id="minPL" type="number" value="0" step="0.1"></div>
+      <div class="field"><label>Max DD (%)</label><input id="maxDD" type="number" value="40" min="0" step="1"></div>
+      <div class="field"><label>Min Trades</label><input id="minTrades" type="number" value="5" min="1"></div>
+      <div class="field"><label>Min Score (1–7)</label><input id="scoreMin" type="number" value="5" min="1" max="7" step="1"></div>
+      <div class="field"><label>Breakout Lookback</label><input id="lookback" type="number" value="20" min="5" max="100"></div>
+      <div class="field"><label>Volume Multiplier</label><input id="volMult" type="number" value="1.5" min="0.5" max="5" step="0.1"></div>
+      <div class="field"><label>ATR Multiplier</label><input id="atrMult" type="number" value="1.5" min="0.5" max="5" step="0.1"></div>
+    </div>
+
+    <div class="actions">
+      <button id="btBtn" class="green">RUN BACKTEST</button>
+      <button id="stopBtn" class="red" disabled>STOP</button>
+      <button id="saveFilter" class="secondary">SAVE FILTER</button>
+      <button id="clearFilter" class="secondary">CLEAR FILTER</button>
+    </div>
+    <div class="note"><b>Mode cepat aman:</b> backtest menjalankan 2 pair bersamaan. Mesin strategi dan seluruh parameter trading tetap sama; yang diubah hanya cara antrean data diproses.<br>Strategi: trend EMA + momentum RSI/MACD + breakout high + volume. Entry pada open candle berikutnya. Jika SL dan TP tersentuh pada candle yang sama, dihitung SL lebih dulu.</div>
+    <div id="btStatus" class="status"></div>
+    <div class="bar"><i id="btBar"></i></div>
+  </div>
+
+  <div class="panel">
+    <div class="stats" id="btStats"></div>
+    <div id="filterDiag" class="status"></div>
+    <div class="note">Rata-rata WR dan P/L hanya menghitung coin yang memiliki minimal 1 trade. Coin tanpa trade tidak masuk denominator.</div>
+  </div>
+
+  <div class="panel">
+    <div class="tableWrap">
+      <table><thead><tr>
+        <th>#</th><th>Pair</th><th>Trades</th><th>Wins</th><th>Losses</th><th>WR</th>
+        <th>Net P/L</th><th>PF</th><th>Max DD</th><th>Pass</th><th>Detail</th>
+      </tr></thead><tbody id="btTable"></tbody></table>
+    </div>
+  </div>
+</section>
+
+<section id="settings" class="tabPage hidden">
+  <div class="panel">
+    <div class="panelTitle">Strategy Profile</div>
+    <div class="panelSub">Parameter strategi aktif yang digunakan Scanner dan Backtest.</div>
+    <div class="grid5" style="margin-top:12px">
+      <div class="field"><label>Timeframe</label><select id="srTf"><option value="15m" selected>15m</option></select></div>
+      <div class="field"><label>Min Score</label><input id="srScore" type="number" value="5" readonly></div>
+      <div class="field"><label>Breakout Lookback</label><input id="srLookback" type="number" value="20" readonly></div>
+      <div class="field"><label>Volume Multiplier</label><input id="srVolMult" type="number" value="1.5" readonly></div>
+      <div class="field"><label>ATR Multiplier</label><input id="srAtrMult" type="number" value="1.5" readonly></div>
+    </div>
+    <div class="note">Score maksimal 7: trend EMA, momentum RSI/MACD, breakout high, dan konfirmasi volume. Scanner menampilkan hanya setup yang lolos score minimum.</div>
+  </div>
+</section>
+
+<div id="tradeModal" class="tradeModal hidden">
+  <div class="tradeBox">
+    <div class="tradeHead">
+      <h3 id="tradeTitle">TRADE HISTORY</h3>
+      <button id="closeTradeModal" class="secondary right">TUTUP</button>
+    </div>
+    <div class="tradeBody">
+      <div id="tradeSummary" class="tradeSummary"></div>
+      <div class="tableWrap">
+        <table><thead><tr><th>#</th><th>Signal</th><th>Entry</th><th>SL</th><th>TP</th><th>Exit</th><th>Result</th><th>P/L</th><th>Score</th></tr></thead>
+        <tbody id="tradeTable"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const API='https://api.binance.com';
+const STORE='binanceScannerM15_trendMomentum_v9';
+let filterActive=false;
+let symbols=[], results=[], filtered=[], running=false, stopRequested=false;
+const $=id=>document.getElementById(id);
+function num(id){return Number($(id).value)}
+function fmt(x,d=2){return Number.isFinite(x)?x.toFixed(d):'-'}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+async function api(path,params={},attempt=0){const u=new URL(API+path);Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));try{const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),15000);const r=await fetch(u,{signal:ctl.signal});clearTimeout(timer);if(!r.ok){if((r.status===429||r.status>=500)&&attempt<3){await sleep(1000*(attempt+1));return api(path,params,attempt+1)}throw new Error('HTTP '+r.status+' '+r.statusText)}return await r.json()}catch(e){if((e.name==='AbortError'||/Failed to fetch|NetworkError/i.test(e.message))&&attempt<2){await sleep(1200*(attempt+1));return api(path,params,attempt+1)}throw new Error(e.name==='AbortError'?'Request timeout (15s)':e.message)}}
+async function getSymbols(){if(symbols.length)return symbols;const x=await api('/api/v3/exchangeInfo');symbols=x.symbols.filter(s=>s.status==='TRADING'&&s.quoteAsset==='USDT'&&s.isSpotTradingAllowed).map(s=>s.symbol).sort();return symbols}
+function ema(arr,p){const k=2/(p+1);let e=arr[0];const out=[e];for(let i=1;i<arr.length;i++){e=arr[i]*k+e*(1-k);out.push(e)}return out}
+function rsi(arr,p=14){let g=0,l=0;const out=Array(arr.length).fill(null);for(let i=1;i<=p&&i<arr.length;i++){const d=arr[i]-arr[i-1];if(d>=0)g+=d;else l-=d}let ag=g/p,al=l/p;out[p]=al===0?100:100-100/(1+ag/al);for(let i=p+1;i<arr.length;i++){const d=arr[i]-arr[i-1],gg=Math.max(d,0),ll=Math.max(-d,0);ag=(ag*(p-1)+gg)/p;al=(al*(p-1)+ll)/p;out[i]=al===0?100:100-100/(1+ag/al)}return out}
+function atr(high,low,close,p=14){const tr=Array(close.length).fill(null);for(let i=1;i<close.length;i++)tr[i]=Math.max(high[i]-low[i],Math.abs(high[i]-close[i-1]),Math.abs(low[i]-close[i-1]));let a=0,c=0,out=Array(close.length).fill(null);for(let i=1;i<tr.length;i++){if(tr[i]==null)continue;if(c<p){a+=tr[i];c++;if(c===p)out[i]=a/p}else{a=(a*(p-1)+tr[i])/p;out[i]=a}}return out}
+function macd(close){const e12=ema(close,12),e26=ema(close,26),m=e12.map((v,i)=>v-e26[i]),sig=ema(m.slice(0),9),hist=m.map((v,i)=>v-sig[i]);return {m,hist}}
+function indicators(c){const close=c.map(x=>x.close),high=c.map(x=>x.high),low=c.map(x=>x.low),vol=c.map(x=>x.volume);return {close,high,low,vol,e9:ema(close,9),e21:ema(close,21),e20:ema(close,20),e50:ema(close,50),e200:ema(close,200),rsi:rsi(close),atr:atr(high,low,close),macd:macd(close)}}
+function signalAt(c,i,ind){
+  const lookback=Math.max(5,Math.min(100,Math.floor(num('lookback')||20)));
+  const volMult=Math.max(0.5,Math.min(5,num('volMult')||1.5));
+  const minScore=Math.max(1,Math.min(7,Math.floor(num('scoreMin')||5)));
+  if(!ind||i<Math.max(205,lookback+20)||!Number.isFinite(ind.atr[i])||!Number.isFinite(ind.rsi[i]))return null;
+  let score=0, reasons=[];
+  if(c[i].close>ind.e50[i]&&ind.e50[i]>ind.e200[i]){score+=2;reasons.push('EMA trend')}
+  if(ind.e20[i]>ind.e50[i]){score++;reasons.push('EMA20>EMA50')}
+  if(ind.rsi[i]>=52&&ind.rsi[i]<=72){score++;reasons.push('RSI')}
+  if(ind.macd.hist[i]>0&&ind.macd.hist[i]>ind.macd.hist[i-1]){score++;reasons.push('MACD')}
+  let priorHigh=-Infinity;
+  for(let j=i-lookback;j<i;j++)priorHigh=Math.max(priorHigh,c[j].high);
+  if(c[i].close>priorHigh){score++;reasons.push('Breakout')}
+  let volSum=0;
+  for(let j=i-20;j<i;j++)volSum+=c[j].volume;
+  const avgVol=volSum/20, volx=avgVol>0?c[i].volume/avgVol:0;
+  if(avgVol>0&&volx>=volMult){score++;reasons.push('Volume')}
+  if(score<minScore)return null;
+  const volPct=(Number.isFinite(ind.atr[i])&&Number.isFinite(c[i].close)&&c[i].close>0)?(ind.atr[i]/c[i].close*100):0;
+  return {score,reasons:reasons.join(', '),rsi:ind.rsi[i],volx,priorHigh,atr:ind.atr[i],volPct};
+}
+function tradeFromSignal(c,i,ind,rr){
+  const sig=signalAt(c,i,ind);if(!sig||i+1>=c.length)return null;
+  const entry=c[i+1].open;
+  if(!Number.isFinite(entry)||entry<=0)return null;
+  const tpPct=Math.max(0.1,Math.min(100,num('tpPct')||2));
+  const slPct=Math.max(0.1,Math.min(100,num('slPct')||50));
+  const sl=entry*(1-slPct/100),tp=entry*(1+tpPct/100);
+  return {entry,sl,tp,signalIndex:i,entryIndex:i+1,score:sig.score,rsi:sig.rsi,volx:sig.volx,
+    support:sl,resistance:sig.priorHigh,reasons:sig.reasons,tpPct,slPct};
+}
+function evaluateTrade(c,t,fee){
+  let exit=null,win=false,exitIndex=-1,exitReason='';
+  for(let j=t.entryIndex;j<c.length;j++){
+    const hi=c[j].high,lo=c[j].low;
+    if(lo<=t.sl&&hi>=t.tp){exit=t.sl;win=false;exitIndex=j;exitReason='SL & TP';break}
+    if(lo<=t.sl){exit=t.sl;win=false;exitIndex=j;exitReason='SL';break}
+    if(hi>=t.tp){exit=t.tp;win=true;exitIndex=j;exitReason='TP';break}
+  }
+  if(exit==null)return null;
+  const priceRisk=t.entry-t.sl;
+  const rMultiple=priceRisk>0?(exit-t.entry)/priceRisk:0;
+  const notionalRatio=priceRisk>0?t.entry/priceRisk:0;
+  return {
+    win,exit,entry:t.entry,sl:t.sl,tp:t.tp,score:t.score,rsi:t.rsi,volx:t.volx,
+    rMultiple,notionalRatio,fee,
+    signalTime:c[t.signalIndex]?.openTime||0,entryTime:c[t.entryIndex]?.openTime||0,
+    exitTime:c[exitIndex]?.openTime||0,exitIndex,reason:exitReason
+  };
+}
+const TF_MS={'5m':5*60e3,'15m':15*60e3,'1h':60*60e3,'4h':4*60*60e3,'1d':24*60*60e3};
+async function fetchKlines(symbol,interval,start,end){let out=[],cursor=start,guard=0,step=TF_MS[interval]||15*60e3;while(cursor<end&&guard++<10000){if(stopRequested)throw new Error('STOPPED');const data=await api('/api/v3/klines',{symbol,interval,startTime:cursor,endTime:end,limit:1000});if(!data.length)break;for(const x of data)out.push({open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5],openTime:x[0],closeTime:x[6]});const lastOpen=+data[data.length-1][0],next=lastOpen+step;if(next<=cursor)break;cursor=next;if(data.length<1000)break;await sleep(80)}const now=Date.now();return out.filter(x=>x.openTime<end&&x.closeTime<now)}
+function metrics(trades,capital){
+  // Simulasi Spot: seluruh equity yang tersedia dipakai pada setiap trade,
+  // lalu equity hasil trade menjadi modal trade berikutnya (compounding).
+  // fee diinput dalam persen per sisi; entry dan exit masing-masing dikenai fee.
+  const fee=num('fee');
+  let wins=0,gain=0,loss=0,eq=capital,peak=capital,maxdd=0;
+  for(const t of trades){
+    const equityAtEntry=eq;
+    const grossPct=((t.exit-t.entry)/t.entry)*100;
+    const feePct=2*fee;
+    t.net=grossPct-feePct;
+    t.positionSize=equityAtEntry/Math.max(1e-12,t.entry); // kuantitas aset; gunakan seluruh modal
+    t.notional=equityAtEntry;
+    t.pnl=equityAtEntry*(t.net/100);
+    if(t.net>0){wins++;gain+=t.pnl}else if(t.net<0){loss+=Math.abs(t.pnl)}
+    eq=Math.max(0,eq+t.pnl);
+    peak=Math.max(peak,eq);
+    maxdd=Math.max(maxdd,peak>0?(peak-eq)/peak*100:0);
+  }
+  return {trades:trades.length,wins,losses:trades.length-wins,wr:trades.length?wins/trades.length*100:0,net:capital?(eq/capital-1)*100:0,pf:loss?gain/loss:(gain>0?Infinity:0),dd:maxdd,equity:eq};
+}
+function passes(m){return m.trades>=num('minTrades')&&m.wr>=num('minWR')&&m.pf>=num('minPF')&&m.net>=num('minPL')&&m.dd<=num('maxDD')}
+async function backtestSymbol(symbol,start,end){
+  const tf=$('tf').value||'15m',step=TF_MS[tf]||TF_MS['15m'],warmupBars=230;
+  const dataStart=Math.max(0,start-warmupBars*step);
+  const c=await fetchKlines(symbol,tf,dataStart,end);
+  if(c.length<warmupBars+2)return {symbol,...metrics([],num('capital')),pass:false,reason:'data'};
+  const ind=indicators(c),rr=(num('tpPct')||2)/(num('slPct')||50),fee=num('fee'),tr=[];
+  let busyUntil=-1;
+  for(let i=0;i<c.length-1;i++){
+    if(c[i].openTime<start)continue;
+    if(c[i].openTime>=end)break;
+    if(i<=busyUntil)continue;
+    const t=tradeFromSignal(c,i,ind,rr);
+    if(!t||c[t.entryIndex].openTime>=end)continue;
+    const r=evaluateTrade(c,t,fee);
+    if(!r)continue;
+    tr.push(r);busyUntil=r.exitIndex;
+  }
+  const m=metrics(tr,num('capital'));
+  return {symbol,...m,tradesDetail:tr,pass:passes(m)};
+}
+function renderBT(){
+  const tbody=$('btTable');tbody.innerHTML='';
+  results.sort((a,b)=>b.net-a.net);
+  for(let i=0;i<results.length;i++){
+    const r=results[i],has=Array.isArray(r.tradesDetail)&&r.tradesDetail.length;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${i+1}</td><td><b>${r.symbol}</b></td><td>${r.trades}</td><td>${r.wins}</td><td>${r.losses}</td><td class="${r.wr>=num('minWR')?'pos':'neg'}">${fmt(r.wr,1)}%</td><td class="${r.net>=0?'pos':'neg'}">${fmt(r.net)}%</td><td>${r.pf===Infinity?'∞':fmt(r.pf)}</td><td>${fmt(r.dd)}%</td><td>${r.pass?'<span class="pos">PASS</span>':'-'}</td><td>${has?`<button class="tradeBtn secondary" onclick="showTradeHistory('${r.symbol}')">RIWAYAT</button>`:'-'}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+function renderBTStats(){
+  // Coin tanpa trade TIDAK ikut denominator rata-rata WR/P&L/PF.
+  const tradeRows=results.filter(r=>Number(r.trades)>0);
+  const total=tradeRows.reduce((a,r)=>a+r.trades,0);
+  const wins=tradeRows.reduce((a,r)=>a+r.wins,0);
+  const netAvg=tradeRows.length?tradeRows.reduce((a,r)=>a+r.net,0)/tradeRows.length:0;
+  const overallWR=total?wins/total*100:0;
+
+  const passRows=results.filter(r=>r.pass);
+  const pass=passRows.length;
+  const passTradeRows=passRows.filter(r=>Number(r.trades)>0);
+  const avgFilteredWR=passTradeRows.length?passTradeRows.reduce((a,r)=>a+r.wr,0)/passTradeRows.length:0;
+  const filteredTrades=passTradeRows.reduce((a,r)=>a+r.trades,0);
+  const avgFilteredPL=passTradeRows.length?passTradeRows.reduce((a,r)=>a+r.net,0)/passTradeRows.length:0;
+
+  const pfRows=tradeRows.filter(r=>Number.isFinite(r.pf));
+  const avgPF=pfRows.length?pfRows.reduce((a,r)=>a+r.pf,0)/pfRows.length:0;
+  const label=running?'Coin diproses':'Coin selesai';
+
+  $('btStats').innerHTML=
+    `<div class="stat"><b>${results.length}</b><span>${label}</span></div>`+
+    `<div class="stat"><b>${total}</b><span>Total trades${running?' sementara':''}</span></div>`+
+    `<div class="stat"><b>${fmt(overallWR,1)}%</b><span>WR keseluruhan${running?' sementara':''}</span></div>`+
+    `<div class="stat"><b>${passTradeRows.length?fmt(avgFilteredWR,1)+'%':'—'}</b><span>Rata-rata WR coin filter</span></div>`+
+    `<div class="stat"><b>${passTradeRows.length?filteredTrades:'—'}</b><span>Total trade coin filter</span></div>`+
+    `<div class="stat"><b>${passTradeRows.length?fmt(avgFilteredPL)+'%':'—'}</b><span>Rata-rata P/L coin filter</span></div>`+
+    `<div class="stat"><b>${tradeRows.length?fmt(netAvg)+'%':'—'}</b><span>Rata-rata P/L coin bertrede</span></div>`+
+    `<div class="stat"><b>${pfRows.length?fmt(avgPF):'—'}</b><span>Avg PF coin bertrede</span></div>`+
+    `<div class="stat"><b>${pass}</b><span>Coin lolos filter${running?' sementara':''}</span></div>`;
+}
+function fmtDate(ts){
+  if(!ts)return '-';
+  return new Date(ts).toLocaleString('id-ID',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function esc(s){
+  return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function showTradeHistory(symbol){
+  const r=results.find(x=>x.symbol===symbol);
+  if(!r)return;
+  const tr=Array.isArray(r.tradesDetail)?r.tradesDetail:[];
+  $('tradeTitle').textContent=`RIWAYAT TRADE — ${symbol}`;
+  $('tradeSummary').innerHTML=`
+    <div class="tradeStat"><b>${tr.length}</b><span>Total Trades</span></div>
+    <div class="tradeStat"><b class="pos">${r.wins||0}</b><span>Wins</span></div>
+    <div class="tradeStat"><b class="neg">${r.losses||0}</b><span>Losses</span></div>
+    <div class="tradeStat"><b>${fmt(r.wr,1)}%</b><span>Win Rate</span></div>
+    <div class="tradeStat"><b class="${r.net>=0?'pos':'neg'}">${fmt(r.net)}%</b><span>Net P/L</span></div>`;
+  $('tradeTable').innerHTML=tr.length?tr.map((t,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${fmtDate(t.signalTime)}</td>
+      <td>${fmt(t.entry,8)}<br><span class="small">${fmtDate(t.entryTime)}</span></td>
+      <td>${fmt(t.sl,8)}</td>
+      <td>${fmt(t.tp,8)}</td>
+      <td>${fmt(t.exit,8)}<br><span class="small">${fmtDate(t.exitTime)}</span></td>
+      <td class="${t.win?'pos':'neg'}">${t.win?'WIN':'LOSS'}<br><span class="small">${esc(t.reason)}</span></td>
+      <td class="${t.net>=0?'pos':'neg'}">${fmt(t.net,3)}%</td>
+      <td>${t.score}</td>
+    </tr>`).join(''):'<tr><td colspan="9" class="small">Tidak ada trade tersimpan.</td></tr>';
+  $('tradeModal').classList.remove('hidden');
+}
+$('closeTradeModal').onclick=()=>$('tradeModal').classList.add('hidden');
+$('tradeModal').onclick=e=>{if(e.target===$('tradeModal'))$('tradeModal').classList.add('hidden')};
+
+function compactResults(){return results.map(r=>({symbol:r.symbol,trades:r.trades||0,wins:r.wins||0,losses:r.losses||0,wr:Number(r.wr)||0,net:Number(r.net)||0,pf:Number.isFinite(r.pf)?r.pf:(r.pf===Infinity?'INF':0),dd:Number(r.dd)||0,equity:Number(r.equity)||0,pass:!!r.pass,reason:r.reason||''}));}
+function storagePayload(){return {strategyVersion:7,storageVersion:2,results:compactResults(),filtered:[...new Set(filtered||[])].slice(0,1000),filterActive:!!filterActive,settings:{tf:$('tf').value,startDate:$('startDate').value,endDate:$('endDate').value,tpPct:num('tpPct'),slPct:num('slPct'),fee:num('fee'),capital:num('capital'),minWR:num('minWR'),minPF:num('minPF'),minPL:num('minPL'),maxDD:num('maxDD'),minTrades:num('minTrades'),scoreMin:num('scoreMin'),lookback:num('lookback'),volMult:num('volMult'),atrMult:num('atrMult')},savedAt:Date.now()};}
+function save(){try{const payload=JSON.stringify(storagePayload());localStorage.removeItem(STORE);localStorage.setItem(STORE,payload);return true}catch(e){console.warn('Storage save skipped:',e);try{localStorage.removeItem(STORE)}catch(_){}return false}}
+function load(){try{const raw=localStorage.getItem(STORE);if(!raw)return;const x=JSON.parse(raw);const sameStrategy=x.strategyVersion===5||x.strategyVersion===6||x.strategyVersion===7;if(!sameStrategy){localStorage.removeItem(STORE);return;}results=(x.results||[]).map(r=>({...r,pf:r.pf==='INF'?Infinity:Number(r.pf)||0,tradesDetail:[]}));filtered=Array.isArray(x.filtered)?x.filtered:[];filterActive=!!x.filterActive&&filtered.length>0;const st=x.settings||{};Object.entries(st).forEach(([k,v])=>{if($(k)&&v!==undefined)$(k).value=v});$('tf').value='15m';$('srTf').value='15m';$('tpPct').value=2;$('slPct').value=50;syncStrategySettings();if(x.strategyVersion===5||x.strategyVersion===6){localStorage.removeItem(STORE);save();}renderBT();renderBTStats();updatePill();renderFilterDiag()}catch(e){console.warn('Storage load skipped:',e);try{localStorage.removeItem(STORE)}catch(_){}results=[];filtered=[];filterActive=false}}
+function updatePill(){const n=filtered.length;$('filterPill').textContent=filterActive&&n?`${n} coin tersaring dari backtest`:'Filter belum aktif — scanner memakai semua coin'}
+function filterDiagnostics(){const total=results.length;if(!total)return {total:0,trade:0,wr:0,pf:0,pl:0,dd:0,pass:0};const mt=num('minTrades'),mw=num('minWR'),mp=num('minPF'),mpl=num('minPL'),md=num('maxDD');const trade=results.filter(r=>r.trades>=mt).length;const wr=results.filter(r=>r.trades>=mt&&r.wr>=mw).length;const pf=results.filter(r=>r.trades>=mt&&r.wr>=mw&&r.pf>=mp).length;const pl=results.filter(r=>r.trades>=mt&&r.wr>=mw&&r.pf>=mp&&r.net>=mpl).length;const dd=results.filter(r=>r.trades>=mt&&r.wr>=mw&&r.pf>=mp&&r.net>=mpl&&r.dd<=md).length;return {total,trade,wr,pf,pl,dd,pass:dd}}
+function renderFilterDiag(){const d=filterDiagnostics();const el=$('filterDiag');if(!el)return;el.innerHTML=d.total?`<div><b>Filter ${d.pass} coin</b> dari ${d.total}</div><div class="small">Minimal trade: ${d.trade} → WR: ${d.wr} → PF: ${d.pf} → P/L: ${d.pl} → DD: ${d.dd}</div>`:'Belum ada hasil backtest.'}
+function applyFilter(){if(!results.length){$('btStatus').textContent='Belum ada hasil backtest untuk difilter.';return}filtered=results.filter(r=>r.pass).map(r=>r.symbol);if(!filtered.length){filterActive=false;save();updatePill();renderFilterDiag();$('btStatus').textContent='Tidak ada coin yang memenuhi semua filter. Filter TIDAK diaktifkan; Scanner tetap memakai semua coin. Longgarkan filter atau turunkan Min Trades.';return}filterActive=true;save();updatePill();renderFilterDiag();$('btStatus').textContent=`Filter disimpan dan AKTIF: ${filtered.length} coin dari ${results.length}. Scanner sekarang hanya memakai coin tersebut.`}
+async function scan(){
+  try{
+    $('scanBtn').disabled=true;stopRequested=false;
+    const all=await getSymbols(), allSet=new Set(all);
+    const requestedList=(filterActive&&filtered.length)?[...new Set(filtered)]:all;
+    const list=requestedList.filter(s=>allSet.has(s));
+    $('scanTable').innerHTML='';$('scanCards').innerHTML='';
+    $('scanBar').style.width='0%';
+
+    const btMap=new Map(results.map(x=>[x.symbol,x]));
+    let done=0,signalCount=0,errors=0,rows=[];
+    const concurrency=2; // cukup cepat, tetapi aman untuk rate-limit Binance
+
+    const renderStats=()=>{
+      $('scanStats').innerHTML=
+        `<div class="stat"><b>${done}</b><span>Pair selesai</span></div>`+
+        `<div class="stat"><b>${signalCount}</b><span>Sinyal</span></div>`+
+        `<div class="stat"><b>${filterActive?filtered.length:all.length}</b><span>Universe</span></div>`+
+        `<div class="stat"><b>${errors}</b><span>Error pair</span></div>`;
+    };
+
+    const appendSignal=(r)=>{
+      const br=btMap.get(r.symbol);
+      const wr=br&&br.trades?`${fmt(br.wr,1)}%`:'—';
+      const wrClass=br&&br.trades?(br.wr>=num('minWR')?'pos':'neg'):'';
+      const tradeCount=br?br.trades:0;
+      const pl=br&&br.trades?`${fmt(br.net)}%`:'—';
+      const plClass=br&&br.trades?(br.net>=0?'pos':'neg'):'';
+      const rank=rows.length;
+
+      const tr=document.createElement('tr');
+      tr.className='scan-live-row';
+      tr.innerHTML=`<td>${rank}</td><td><b>${esc(r.symbol)}</b></td><td>${r.score}/7</td><td>${tradeCount}</td><td class="${wrClass}">${wr}</td><td class="${plClass}">${pl}</td><td>${fmt(r.entry,8)}</td><td>${fmt(r.sl,8)}</td><td>${fmt(r.tp,8)}</td><td>1:${fmt(r.rr,1)}</td><td>${fmt(r.rsi,1)}</td><td><b>${fmt(r.volPct,2)}%</b></td><td>${fmt(r.volx,2)}x</td><td class="pos">${esc(r.reasons)}</td>`;
+      $('scanTable').appendChild(tr);
+
+      const card=document.createElement('div');
+      card.className='signalCard new';
+      card.innerHTML=`<div class="signalTop"><span class="signalRank">#${rank}</span><span class="signalPair">${esc(r.symbol)}</span><span class="signalScore">Score ${r.score}/7</span></div>
+      <div class="signalGrid">
+        <div class="signalItem"><span>Entry</span><b>${fmt(r.entry,8)}</b></div>
+        <div class="signalItem"><span>Stop Loss</span><b class="neg">${fmt(r.sl,8)}</b></div>
+        <div class="signalItem"><span>Take Profit</span><b class="pos">${fmt(r.tp,8)}</b></div>
+        <div class="signalItem"><span>Risk / Reward</span><b>1:${fmt(r.rr,1)}</b></div>
+        <div class="signalItem"><span>RSI</span><b>${fmt(r.rsi,1)}</b></div>
+        <div class="signalItem"><span>ATR</span><b>${fmt(r.volPct,2)}%</b></div>
+        <div class="signalItem"><span>Volume</span><b>${fmt(r.volx,2)}x</b></div>
+        <div class="signalItem"><span>WR Backtest</span><b class="${wrClass}">${wr}</b></div>
+        <div class="signalItem"><span>Trades</span><b>${tradeCount}</b></div>
+        <div class="signalItem"><span>Net P/L</span><b class="${plClass}">${pl}</b></div>
+      </div><div class="signalSetup">${esc(r.reasons)}</div>`;
+      $('scanCards').appendChild(card);
+    };
+
+    $('scanStatus').textContent=`Scanning ${list.length} pair...`;
+
+    let cursor=0;
+    async function worker(){
+      while(true){
+        if(stopRequested)return;
+        const idx=cursor++;
+        if(idx>=list.length)return;
+        const s=list[idx];
+        try{
+          const tf=$('tf').value||'15m',step=TF_MS[tf]||TF_MS['15m'];
+          const c=await fetchKlines(s,tf,Date.now()-Math.max(3,Math.ceil(step*260/86400000))*86400000,Date.now());
+          if(c.length>=230){
+            const ind=indicators(c),i=c.length-1,sg=signalAt(c,i,ind);
+            if(sg){
+              const entry=c[i].close;
+              const tpPct=Math.max(0.1,Math.min(100,num('tpPct')||2));
+              const slPct=Math.max(0.1,Math.min(100,num('slPct')||50));
+              const sl=entry*(1-slPct/100),tp=entry*(1+tpPct/100),rr=tpPct/slPct;
+              if(Number.isFinite(entry)&&Number.isFinite(sl)&&Number.isFinite(tp)&&sl<entry&&tp>entry){
+                const r={symbol:s,score:sg.score,entry,sl,tp,rr,rsi:sg.rsi,volx:sg.volx,volPct:sg.volPct,reasons:sg.reasons};
+                rows.push(r);signalCount++;appendSignal(r);
+              }
+            }
+          }
+        }catch(e){errors++;console.warn('Scan '+s,e)}
+
+        done++;
+        $('scanBar').style.width=(list.length?done/list.length*100:100)+'%';
+        $('scanStatus').textContent=`Scanning ${done}/${list.length} · ${signalCount} signal${signalCount!==1?'s':''}`;
+        renderStats();
+      }
+    }
+
+    await Promise.all(Array.from({length:concurrency},()=>worker()));
+
+    rows.sort((a,b)=>(b.score-a.score)||(b.volPct-a.volPct)||(b.volx-a.volx));
+    $('scanStatus').textContent=stopRequested
+      ? `Scan dihentikan. ${done}/${list.length} pair selesai · ${signalCount} sinyal.`
+      : `Selesai. ${done}/${list.length} pair · ${signalCount} sinyal${errors?` · ${errors} error`:''}.`;
+    renderStats();
+  }catch(e){
+    $('scanStatus').textContent='Error: '+e.message;
+  }finally{
+    $('scanBtn').disabled=false;
+  }
+}
+
+$('btBtn').onclick=async()=>{
+  try{
+    running=true;stopRequested=false;
+    $('btBtn').disabled=true;$('stopBtn').disabled=false;
+    results=[];filtered=[];filterActive=false;updatePill();
+    const all=await getSymbols();
+    const startVal=$('startDate').value,endVal=$('endDate').value;
+    if(!startVal||!endVal)throw new Error('Pilih Tanggal Mulai dan Tanggal Akhir terlebih dahulu.');
+    const start=new Date(startVal+'T00:00:00').getTime(),end=new Date(endVal+'T23:59:59.999').getTime();
+    if(!Number.isFinite(start)||!Number.isFinite(end))throw new Error('Format tanggal tidak valid.');
+    if(start>end)throw new Error('Tanggal Mulai tidak boleh setelah Tanggal Akhir.');
+
+    // PERCEPATAN SAJA: mesin strategi, indikator, entry, SL/TP, evaluasi,
+    // fee, filter, dan perhitungan metrics TIDAK DIUBAH.
+    // Dua worker menjaga throughput tanpa membanjiri endpoint Binance.
+    const concurrency=2;
+    let cursor=0,done=0,errors=0,lastSymbol='';
+
+    async function worker(){
+      while(true){
+        if(stopRequested)return;
+        const idx=cursor++;
+        if(idx>=all.length)return;
+        const s=all[idx];
+        try{
+          const r=await backtestSymbol(s,start,end);
+          results.push(r);
+        }catch(e){
+          if(e.message==='STOPPED')return;
+          errors++;
+          console.warn('Backtest '+s,e);
+        }
+        done++;
+        lastSymbol=s;
+        $('btBar').style.width=done/all.length*100+'%';
+        $('btStatus').textContent=`Backtest ${done}/${all.length} — ${s}${errors?' | error: '+errors:''}`;
+        if(done%4===0){
+          filtered=results.filter(r=>r.pass).map(r=>r.symbol);
+          renderBT();renderBTStats();renderFilterDiag();
+        }
+      }
+    }
+
+    await Promise.all(Array.from({length:concurrency},()=>worker()));
+
+    filtered=results.filter(r=>r.pass).map(r=>r.symbol);
+    renderBT();renderBTStats();renderFilterDiag();
+    const saved=save();
+    $('btStatus').textContent=stopRequested
+      ? `Dihentikan: ${results.length}/${done} coin selesai.${saved?' Hasil ringkas tersimpan aman.':''}`
+      : `Selesai: ${results.length}/${all.length} coin. ${errors?errors+' coin error (lihat console). ':''}${saved?'Hasil ringkas tersimpan aman. ':''}Klik SIMPAN FILTER untuk memakai hasil filter pada Scanner.`;
+  }catch(e){
+    $('btStatus').textContent='Error: '+e.message;
+  }finally{
+    running=false;$('btBtn').disabled=false;$('stopBtn').disabled=true;
+  }
+};
+$('stopBtn').onclick=()=>{stopRequested=true};$('saveFilter').onclick=()=>{applyFilter()};$('clearFilter').onclick=()=>{filtered=[];filterActive=false;save();updatePill();$('btStatus').textContent='Filter scanner dinonaktifkan. Hasil ringkas backtest tetap tersimpan.'};$('scanBtn').onclick=()=>{stopRequested=false;scan()};$('clearResults').onclick=()=>{$('scanTable').innerHTML='';$('scanCards').innerHTML='';$('scanStats').innerHTML='';$('scanBar').style.width='0%';$('scanStatus').textContent='Siap melakukan scan.'};
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.tabPage').forEach(x=>x.classList.add('hidden'));$(b.dataset.tab).classList.remove('hidden')});
+function syncStrategySettings(){
+  if($('srScore'))$('srScore').value=$('scoreMin').value;
+  if($('srLookback'))$('srLookback').value=$('lookback').value;
+  if($('srVolMult'))$('srVolMult').value=$('volMult').value;
+  if($('srAtrMult'))$('srAtrMult').value=$('atrMult').value;
+}
+['scoreMin','lookback','volMult','atrMult'].forEach(id=>{if($(id))$(id).addEventListener('change',syncStrategySettings)});
+function initDateRange(){const endEl=$('endDate'),startEl=$('startDate');if(!endEl||!startEl)return;const pad=n=>String(n).padStart(2,'0'),fmtInput=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;const today=new Date(),start=new Date(today.getFullYear(),today.getMonth(),today.getDate()-9);if(!endEl.value)endEl.value=fmtInput(today);if(!startEl.value)startEl.value=fmtInput(start);}
+load();initDateRange();syncStrategySettings();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js", {scope: "./"})
+      .catch(err => console.warn("PWA service worker:", err));
+  });
+}
+</script>
+
+</body></html>
